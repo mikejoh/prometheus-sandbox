@@ -1,0 +1,8 @@
+am1/data/
+am2/data/
+am3/data/
+jenkins/home/
+grafana/png/
+grafana/*.db
+prometheus/data/
+k8s/

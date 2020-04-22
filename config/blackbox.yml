@@ -1,0 +1,19 @@
+modules:
+  http_2xx:
+    prober: http
+    http:
+      preferred_ip_protocol: ip4
+      valid_status_codes:
+        - 200
+        - 204
+        
+  http_k8s_api_2xx:
+    prober: http
+    http:
+      preferred_ip_protocol: ip4
+      valid_status_codes:
+        - 200
+      fail_if_body_not_matches_regexp:
+        - "^ok$"
+      tls_config:
+        insecure_skip_verify: true

@@ -1,0 +1,116 @@
+version: '3.7'
+services:
+  am1:
+    image: prom/alertmanager:v0.16.2
+    volumes:
+      - $PWD/am1/:/alertmanager/
+      - $PWD/config/alertmanager.yml:/alertmanager.yml
+    ports:
+      - 9001:9093
+    command: ["--config.file=/alertmanager.yml", "--storage.path=/alertmanager/data/", "--cluster.peer=am1:9094", "--cluster.peer=am2:9094", "--cluster.peer=am3:9094"]
+    networks:
+      monnet:
+        aliases:
+          - am1
+
+  am2:
+    image: prom/alertmanager:v0.16.2
+    volumes:
+      - $PWD/am2/:/alertmanager/
+      - $PWD/config/alertmanager.yml:/alertmanager.yml
+    ports:
+      - 9002:9093
+    command: ["--config.file=/alertmanager.yml", "--storage.path=/alertmanager/data/", "--cluster.peer=am1:9094", "--cluster.peer=am2:9094", "--cluster.peer=am3:9094"]
+    networks:
+      monnet:
+        aliases:
+          - am2
+
+  am3:
+    image: prom/alertmanager:v0.16.2
+    volumes:
+      - $PWD/am3/:/alertmanager/
+      - $PWD/config/alertmanager.yml:/alertmanager.yml
+    ports:
+      - 9003:9093
+    command: ["--config.file=/alertmanager.yml", "--storage.path=/alertmanager/data/", "--cluster.peer=am1:9094", "--cluster.peer=am2:9094", "--cluster.peer=am3:9094"]
+    networks:
+      monnet:
+        aliases:
+          - am3
+
+  prometheus:
+    image: prom/prometheus:v2.17.2
+    volumes:
+      - $PWD/prometheus/:/prometheus/
+      - $PWD/config/prometheus.yml:/prometheus.yml
+      - $PWD/config/prometheus-rules.yml:/prometheus-rules.yml
+    ports:
+      - 9090:9090
+    command: ["--config.file=/prometheus.yml", "--storage.tsdb.path=/prometheus/data", "--web.enable-lifecycle"]
+    networks:
+      monnet:
+        aliases:
+          - prometheus
+  
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.16.0
+    volumes:
+      - $PWD/config/blackbox.yml:/blackbox.yml
+    ports:
+      - 9115:9115
+    command: ["--config.file=/blackbox.yml"]
+    networks:
+      monnet:
+        aliases:
+          - blackbox-exporter
+
+  nginx: 
+    image: nginx:latest
+    ports:
+      - 81:80
+    volumes:
+      - $PWD/config/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      monnet:
+        aliases:
+          - nginx
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:0.3.0
+    ports:
+      - 9113:9113
+    command: "-nginx.scrape-uri http://nginx/nginx_status"
+    networks:
+      monnet:
+        aliases:
+          - nginx-exporter
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3000:3000
+    volumes:
+      - $PWD/grafana/:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=secret
+    networks:
+      monnet:
+        aliases:
+          - grafana
+
+  echo-service:
+    build: 
+      context: ./echo-service
+    networks:
+      monnet:
+        aliases:
+          - echo-service
+
+networks:
+  monnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet:  192.168.250.0/24
