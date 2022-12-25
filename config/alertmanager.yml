@@ -2,18 +2,18 @@ global:
   resolve_timeout: 5m
 
 route:
-  group_by: ['cluster', 'alertname']
+  group_by: ["cluster", "alertname"]
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: 'web.hook'
+  receiver: "web.hook"
 receivers:
-- name: 'web.hook'
-  webhook_configs:
-  - url: 'http://echo-service:5001/'
+  - name: "web.hook"
+    webhook_configs:
+      - url: "http://echo-service:5001/"
 inhibit_rules:
   - source_match:
-      severity: 'critical'
+      severity: "critical"
     target_match:
-      severity: 'warning'
-    equal: ['alertname', 'dev', 'instance']
+      severity: "warning"
+    equal: ["alertname", "dev", "instance"]

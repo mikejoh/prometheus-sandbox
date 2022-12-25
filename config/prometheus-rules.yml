@@ -1,77 +1,66 @@
 groups:
-- name: Nginx
-  interval: 1m
-  rules:
-    - alert: NginxActiveConnections
-      expr: nginx_connections_active > 2
-      labels:
-        pager: pagerduty
-        severity: critical
-      annotations:
-        description: Nginx active connections is off the charts on {{ if $labels.fqdn }}{{ $labels.fqdn
-          }}{{ else }}{{ $labels.instance }}{{ end }} since the last check.
-        title: Nginx active connections is off the charts on {{ if $labels.fqdn }}{{ $labels.fqdn
-          }}{{ else }}{{ $labels.instance }}{{ end }} since the last check.
+  - name: BlackboxExporter
+    interval: 1m
+    rules:
+      - alert: ProbeFailed
+        expr: probe_success == 0
+        for: 5m
+        labels:
+          severity: error
+        annotations:
+          summary: "Blackbox probe failed (instance {{ $labels.instance }})"
+          description: "Probe failed\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 
-    - alert: BlackboxProbeFailed
-      expr: probe_success == 0
-      for: 5m
-      labels:
-        severity: error
-      annotations:
-        summary: "Blackbox probe failed (instance {{ $labels.instance }})"
-        description: "Probe failed\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+      - alert: SlowProbe
+        expr: avg_over_time(probe_duration_seconds[1m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Blackbox slow probe (instance {{ $labels.instance }})"
+          description: "Blackbox probe took more than 1s to complete\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 
-    - alert: BlackboxSlowProbe
-      expr: avg_over_time(probe_duration_seconds[1m]) > 1
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Blackbox slow probe (instance {{ $labels.instance }})"
-        description: "Blackbox probe took more than 1s to complete\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"        
+      - alert: ProbeHttpFailure
+        expr: probe_http_status_code <= 199 OR probe_http_status_code >= 400
+        for: 5m
+        labels:
+          severity: error
+        annotations:
+          summary: "Blackbox probe HTTP failure (instance {{ $labels.instance }})"
+          description: "HTTP status code is not 200-399\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 
-    - alert: BlackboxProbeHttpFailure
-      expr: probe_http_status_code <= 199 OR probe_http_status_code >= 400
-      for: 5m
-      labels:
-        severity: error
-      annotations:
-        summary: "Blackbox probe HTTP failure (instance {{ $labels.instance }})"
-        description: "HTTP status code is not 200-399\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+      - alert: SslCertificateWillExpireSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Blackbox SSL certificate will expire soon (instance {{ $labels.instance }})"
+          description: "SSL certificate expires in 30 days\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 
-    - alert: BlackboxSslCertificateWillExpireSoon
-      expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Blackbox SSL certificate will expire soon (instance {{ $labels.instance }})"
-        description: "SSL certificate expires in 30 days\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+      - alert: SslCertificateWillExpireSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 3
+        for: 5m
+        labels:
+          severity: error
+        annotations:
+          summary: "Blackbox SSL certificate will expire soon (instance {{ $labels.instance }})"
+          description: "SSL certificate expires in 3 days\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 
-    - alert: BlackboxSslCertificateWillExpireSoon
-      expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 3
-      for: 5m
-      labels:
-        severity: error
-      annotations:
-        summary: "Blackbox SSL certificate will expire soon (instance {{ $labels.instance }})"
-        description: "SSL certificate expires in 3 days\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+      - alert: ProbeSlowHttp
+        expr: avg_over_time(probe_http_duration_seconds[1m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Blackbox probe slow HTTP (instance {{ $labels.instance }})"
+          description: "HTTP request took more than 1s\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
 
-    - alert: BlackboxProbeSlowHttp
-      expr: avg_over_time(probe_http_duration_seconds[1m]) > 1
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Blackbox probe slow HTTP (instance {{ $labels.instance }})"
-        description: "HTTP request took more than 1s\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
-
-    - alert: BlackboxProbeSlowPing
-      expr: avg_over_time(probe_icmp_duration_seconds[1m]) > 1
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Blackbox probe slow ping (instance {{ $labels.instance }})"
-        description: "Blackbox ping took more than 1s\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+      - alert: ProbeSlowPing
+        expr: avg_over_time(probe_icmp_duration_seconds[1m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Blackbox probe slow ping (instance {{ $labels.instance }})"
+          description: "Blackbox ping took more than 1s\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"

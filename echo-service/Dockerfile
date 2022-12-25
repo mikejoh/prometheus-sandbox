@@ -2,7 +2,9 @@
 FROM golang:alpine AS builder
 RUN mkdir /src
 ADD echo.go /src
-RUN cd /src; go build -o echo
+ADD go.mod /src
+WORKDIR /src
+RUN go build -o echo
 
 # Final
 FROM alpine
