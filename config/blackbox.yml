@@ -5,8 +5,8 @@ modules:
       preferred_ip_protocol: ip4
       valid_status_codes:
         - 200
-        - 204
-        
+        - 201
+
   http_k8s_api_2xx:
     prober: http
     http:

@@ -91,15 +91,14 @@ services:
         aliases:
           - blackbox-exporter
 
-  echo-service:
-    build:
-      context: ./echo-service
+  ehko:
+    image: mikejoh/ehko:latest
     ports:
       - 5001:5001
     networks:
       monnet:
         aliases:
-          - echo-service
+          - ehko
 
 networks:
   monnet:
